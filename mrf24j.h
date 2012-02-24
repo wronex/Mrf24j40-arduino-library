@@ -190,6 +190,7 @@ class Mrf24j
          * Set the channel, using 802.15.4 channel numbers (11..26)
          */
         void set_channel(byte channel);
+		word get_channel(void);
 
         void rx_enable(void);
         void rx_disable(void);

@@ -159,6 +159,11 @@ void Mrf24j::set_channel(byte channel) {
     write_long(MRF_RFCON0, (((channel - 11) << 4) | 0x03));
 }
 
+word Mrf24j::get_channel(void) {
+    byte panh = read_long(MRF_RFCON0);
+    return panh;
+}
+
 void Mrf24j::init(void) {
     /*
     // Seems a bit ridiculous when I use reset pin anyway
