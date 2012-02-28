@@ -5,6 +5,7 @@
  * notifications
  * This example file is considered to be in the public domain
  * Originally written by Karl Palsson, karlp@tweak.net.au, March 2011
+ * Modified by Chris Dunn, chris@dunns.net, Feb 2012
  */
 #include <SPI.h>
 #include <mrf24j.h>
@@ -19,6 +20,13 @@ Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 
 int channel_number = 0;
 int rssi_calc = 0;
+
+int rssi_high[16];
+int rssi_average_total[16];
+int rssi_total_samples = 0;
+int current_rssi_reading = 0;
+
+long sample_interval = 4000;
 
 void setup() {
 
@@ -52,28 +60,61 @@ void setup() {
 }
 
 void loop() {
-
-  for (int i = 0; i <= 15; i++) { //Channel 11 - 26
-    channel_number = i + 11;
-    mrf.set_channel(channel_number);
-    mrf.write_short(MRF_RFCTL, 0x04); //  – Reset RF state machine.
-    mrf.write_short(MRF_RFCTL, 0x00); // part 2
-    delay(1); // delay at least 192usec
-    Serial.print(mrf.get_channel(), HEX);
-    Serial.print(" | ");
-    mrf.write_short(MRF_BBREG6, 0x80);
-    while(rssi_calc != 1){
-        // do something repetitive 200 times
-      rssi_calc = mrf.read_short(MRF_BBREG6), BIN;
+  unsigned long sample_end = millis() + sample_interval;
+  while (millis() <= sample_end) {
+    for (int i = 0; i <= 15; i++) { //Channel 11 - 26
+      channel_number = i + 11;
+      mrf.set_channel(channel_number);
+      mrf.write_short(MRF_RFCTL, 0x04); //  – Reset RF state machine.
+      mrf.write_short(MRF_RFCTL, 0x00); // part 2
+      delay(1); // delay at least 192usec
+      mrf.write_short(MRF_BBREG6, 0x80);
+      while(rssi_calc != 1){
+        rssi_calc = mrf.read_short(MRF_BBREG6), BIN;
+      }
+      current_rssi_reading = mrf.read_long(0x210), DEC;
+      rssi_average_total[i] = rssi_average_total[i] + (current_rssi_reading / 3);
+    
+      if (rssi_high[i] < current_rssi_reading){
+        rssi_high[i] = current_rssi_reading / 3;
+      }
+  
+      rssi_calc = 0;
+      
     }
-    //Serial.print(rssi_calc);
-    //Serial.print(" | ");
-    Serial.print(mrf.read_long(0x210), HEX);
-    Serial.print(" | ");
-    Serial.println(mrf.read_long(0x210), DEC);
-    rssi_calc = 0;
+    rssi_total_samples++;
   }
-  Serial.println("----   ");
+  Serial.println("    Channel Sampling Output");
+  Serial.print("    Total samples: ");
+  Serial.println(rssi_total_samples);
+  //Serial.println("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||");
+  for (int i = 0; i <= 15; i++) { //Channel 11 - 26
+    Serial.print("Channel ");
+    Serial.print(i + 11);
+    Serial.print(" | ");
+      for (int z = 0; z <= rssi_high[i]; z++) {
+        if (z < (rssi_average_total[i] / rssi_total_samples)){
+          Serial.print("#");
+        }
+        else{
+          Serial.print("*");
+        }
+      }
+      Serial.print("   ");
+      Serial.print(rssi_average_total[i] / rssi_total_samples);
+      Serial.print(" | ");
+      Serial.println(rssi_high[i]);
+    //Serial.print(rssi_high[i]);
+    //Serial.print(" | ");
+    //Serial.print(rssi_average_total[i]);
+    //Serial.print(" | ");
+    //Serial.println(rssi_average_total[i] / rssi_total_samples);
+  }
+  Serial.println(" ");
   delay(1000);
+  for (int i = 0; i <= 15; i++) {
+    rssi_high[i] = 0;
+    rssi_average_total[i] = 0;
+  }
+  rssi_total_samples = 0;
 }
-
