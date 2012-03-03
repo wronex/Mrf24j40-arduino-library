@@ -157,6 +157,9 @@ void Mrf24j::set_interrupts(void) {
  */
 void Mrf24j::set_channel(byte channel) {
     write_long(MRF_RFCON0, (((channel - 11) << 4) | 0x03));
+	write_short(MRF_RFCTL, 0x04); // Reset RF state machine after channel change - part 1
+    write_short(MRF_RFCTL, 0x00); // Reset RF state machine after channel change - part 2
+	delay(1);
 }
 
 word Mrf24j::get_channel(void) {
@@ -192,9 +195,8 @@ void Mrf24j::init(void) {
     set_channel(12);
     // max power is by default.. just leave it...
     // Set transmitter power - See “REGISTER 2-62: RF CONTROL 3 REGISTER (ADDRESS: 0x203)”.
-    write_short(MRF_RFCTL, 0x04); //  – Reset RF state machine.
-    write_short(MRF_RFCTL, 0x00); // part 2
-    delay(1); // delay at least 192usec
+    // Reset RF state machine reset now in the "set_channel" routine
+    //delay(1); // delay at least 192usec
 }
 
 /**
@@ -274,6 +276,11 @@ void Mrf24j::set_promiscuous(boolean enabled) {
     }
 }
 
+boolean Mrf24j::get_promiscuous(void) {
+	if (read_short(MRF_RXMCR) == 0x01) return true;
+	if (read_short(MRF_RXMCR) == 0x00) return false;
+}
+
 rx_info_t * Mrf24j::get_rxinfo(void) {
     return &rx_info;
 }
@@ -291,7 +298,7 @@ int Mrf24j::rx_datalength(void) {
 }
 
 void Mrf24j::set_ignoreBytes(int ib) {
-    // some modules behaviour
+    // some modules behavior
     ignoreBytes = ib;
 }
 
