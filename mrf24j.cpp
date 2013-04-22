@@ -113,7 +113,7 @@ word Mrf24j::address16_read(void) {
  * Simple send 16, with acks, not much of anything.. assumes src16 and local pan only.
  * @param data
  */
-void Mrf24j::send16(word dest16, char * data) {
+void Mrf24j::send16(word dest16, char const* data) {
     byte len = strlen(data); // get the length of the char* array
     int i = 0;
     write_long(i++, bytes_MHR); // header length
