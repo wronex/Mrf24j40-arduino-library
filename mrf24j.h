@@ -220,6 +220,7 @@ class Mrf24j
         void set_palna(boolean enabled);
 
         void send16(word dest16, char const * data);
+        void send16(word dest16, char const * data, byte const len);
 
         void interrupt_handler(void);
 

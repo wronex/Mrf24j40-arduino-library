@@ -115,6 +115,10 @@ word Mrf24j::address16_read(void) {
  */
 void Mrf24j::send16(word dest16, char const* data) {
     byte len = strlen(data); // get the length of the char* array
+    send16(dest16, data, len);
+}
+
+void Mrf24j::send16(word dest16, char const * data, byte const len) {
     int i = 0;
     write_long(i++, bytes_MHR); // header length
     // +ignoreBytes is because some module seems to ignore 2 bytes after the header?!.
