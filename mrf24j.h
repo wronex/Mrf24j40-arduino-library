@@ -152,6 +152,7 @@ typedef struct _rx_info_t{
     uint8_t rx_data[116]; //max data length = (127 aMaxPHYPacketSize - 2 Frame control - 1 sequence number - 2 panid - 2 shortAddr Destination - 2 shortAddr Source - 2 FCS)
     uint8_t lqi;
     uint8_t rssi;
+    uint16_t src_addr16;
 } rx_info_t;
 
 /**

@@ -227,6 +227,9 @@ void Mrf24j::interrupt_handler(void) {
             rx_info.rx_data[rd_ptr++] = read_long(0x301 + bytes_MHR + i);
         }
 
+        byte src_l         =  read_long(0x301 + bytes_MHR - 2); // low
+        rx_info.src_addr16 = (read_long(0x301 + bytes_MHR - 1) << 8) | src_l; // hi
+
         rx_info.frame_length = frame_length;
         // same as datasheet 0x301 + (m + n + 2) <-- frame_length
         rx_info.lqi = read_long(0x301 + frame_length);
