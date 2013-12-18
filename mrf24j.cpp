@@ -109,8 +109,12 @@ word Mrf24j::address16_read(void) {
  * Simple send 16, with acks, not much of anything.. assumes src16 and local pan only.
  * @param data
  */
-void Mrf24j::send16(word dest16, char * data) {
+void Mrf24j::send16(word dest16, char const* data) {
     byte len = strlen(data); // get the length of the char* array
+    send16(dest16, data, len);
+}
+
+void Mrf24j::send16(word dest16, char const * data, byte const len) {
     int i = 0;
     write_long(i++, bytes_MHR); // header length
     // +ignoreBytes is because some module seems to ignore 2 bytes after the header?!.
@@ -210,6 +214,9 @@ void Mrf24j::interrupt_handler(void) {
         for (int i = 0; i < rx_datalength(); i++) {
             rx_info.rx_data[rd_ptr++] = read_long(0x301 + bytes_MHR + i);
         }
+
+        byte src_l         =  read_long(0x301 + bytes_MHR - 2); // low
+        rx_info.src_addr16 = (read_long(0x301 + bytes_MHR - 1) << 8) | src_l; // hi
 
         rx_info.frame_length = frame_length;
         // same as datasheet 0x301 + (m + n + 2) <-- frame_length
