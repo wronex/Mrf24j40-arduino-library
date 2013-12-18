@@ -52,7 +52,8 @@ void loop() {
     if (current_time - last_time > tx_interval) {
         last_time = current_time;
         Serial.println("txxxing...");
-        mrf.send16(0x4202, "abcd");
+        char str_to_send[] = "abcd";
+        mrf.send16(0x4202, str_to_send, strlen(str_to_send));
     }
 }
 

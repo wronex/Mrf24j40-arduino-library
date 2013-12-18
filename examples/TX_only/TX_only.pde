@@ -42,6 +42,7 @@ void interrupt_routine() {
 
 void loop() {
     mrf.check_flags(&handle_rx, &handle_tx);
+    // TODO send something here!!
 }
 
 void handle_rx() {

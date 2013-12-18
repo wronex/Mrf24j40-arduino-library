@@ -49,13 +49,6 @@ void loop() {
 void handle_rx() {
     Serial.print("received a packet ");Serial.print(mrf.get_rxinfo()->frame_length, DEC);Serial.println(" bytes long");
     
-    if(mrf.get_bufferPHY()){
-      Serial.println("Packet data (PHY Payload):");
-      for (int i = 0; i < mrf.get_rxinfo()->frame_length; i++) {
-          Serial.print(mrf.get_rxbuf()[i]);
-      }
-    }
-    
     Serial.println("\r\nASCII data (relevant data):");
     for (int i = 0; i < mrf.rx_datalength(); i++) {
         Serial.write(mrf.get_rxinfo()->rx_data[i]);
