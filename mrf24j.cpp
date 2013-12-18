@@ -5,8 +5,6 @@
 
 #include "mrf24j.h"
 
-// aMaxPHYPacketSize = 127, from the 802.15.4-2006 standard.
-static uint8_t rx_buf[127];
 
 // essential for obtaining the data frame only
 // bytes_MHR = 2 Frame control + 1 sequence number + 2 panid + 2 shortAddr Destination + 2 shortAddr Source
@@ -15,8 +13,6 @@ static int bytes_FCS = 2; // FCS length = 2
 static int bytes_nodata = bytes_MHR + bytes_FCS; // no_data bytes in PHY payload,  header length + FCS
 
 static int ignoreBytes = 0; // bytes to ignore, some modules behaviour.
-
-static boolean bufPHY = false; // flag to buffer all bytes in PHY Payload, or not
 
 volatile uint8_t flag_got_rx;
 volatile uint8_t flag_got_tx;
@@ -208,14 +204,6 @@ void Mrf24j::interrupt_handler(void) {
         // read start of rxfifo for, has 2 bytes more added by FCS. frame_length = m + n + 2
         uint8_t frame_length = read_long(0x300);
 
-        // buffer all bytes in PHY Payload
-        if(bufPHY){
-            int rb_ptr = 0;
-            for (int i = 0; i < frame_length; i++) { // from 0x301 to (0x301 + frame_length -1)
-                rx_buf[rb_ptr++] = read_long(0x301 + i);
-            }
-        }
-
         // buffer data bytes
         int rd_ptr = 0;
         // from (0x301 + bytes_MHR) to (0x301 + frame_length - bytes_nodata - 1)
@@ -277,10 +265,6 @@ tx_info_t * Mrf24j::get_txinfo(void) {
     return &tx_info;
 }
 
-uint8_t * Mrf24j::get_rxbuf(void) {
-    return rx_buf;
-}
-
 int Mrf24j::rx_datalength(void) {
     return rx_info.frame_length - bytes_nodata;
 }
@@ -290,16 +274,6 @@ void Mrf24j::set_ignoreBytes(int ib) {
     ignoreBytes = ib;
 }
 
-/**
- * Set bufPHY flag to buffer all bytes in PHY Payload, or not
- */
-void Mrf24j::set_bufferPHY(boolean bp) {
-    bufPHY = bp;
-}
-
-boolean Mrf24j::get_bufferPHY(void) {
-    return bufPHY;
-}
 
 /**
  * Set PA/LNA external control

@@ -201,8 +201,6 @@ class Mrf24j
 
         tx_info_t * get_txinfo(void);
 
-        uint8_t * get_rxbuf(void);
-
         int rx_datalength(void);
 
         void set_ignoreBytes(int ib);
