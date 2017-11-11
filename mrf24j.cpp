@@ -29,21 +29,23 @@ Mrf24j::Mrf24j(int pin_reset, int pin_chip_select, int pin_interrupt) {
     _pin_reset = pin_reset;
     _pin_cs = pin_chip_select;
     _pin_int = pin_interrupt;
-
-    pinMode(_pin_reset, OUTPUT);
-    pinMode(_pin_cs, OUTPUT);
-    pinMode(_pin_int, INPUT);
-
-    SPI.setBitOrder(MSBFIRST) ;
-    SPI.setDataMode(SPI_MODE0);
-    SPI.begin();
 }
 
 void Mrf24j::reset(void) {
-    digitalWrite(_pin_reset, LOW);
-    delay(10);  // just my gut
-    digitalWrite(_pin_reset, HIGH);
-    delay(20);  // from manual
+    if (_pin_reset >= 0) {
+        // Use reset pin when available
+        digitalWrite(_pin_reset, LOW);
+        delay(10); // Guess (probably too long?)
+        digitalWrite(_pin_reset, HIGH);
+        delay(20); // From manual
+    } else {
+        // No reset pin, fall back on soft-reset
+        write_short(MRF_SOFTRST, 0x7);
+        while ((read_short(MRF_SOFTRST) & 0x7) != 0) {
+            ; // Wait for soft reset to finish
+        }
+        // No delay after soft-reset
+    }
 }
 
 byte Mrf24j::read_short(byte address) {
@@ -152,13 +154,19 @@ void Mrf24j::set_channel(byte channel) {
 }
 
 void Mrf24j::init(void) {
-    /*
-    // Seems a bit ridiculous when I use reset pin anyway
-    write_short(MRF_SOFTRST, 0x7); // from manual
-    while (read_short(MRF_SOFTRST) & 0x7 != 0) {
-        ; // wait for soft reset to finish
-    }
-    */
+    pinMode(_pin_cs, OUTPUT);
+    if (_pin_reset >= 0)
+        pinMode(_pin_reset, OUTPUT);
+    if (_pin_int >= 0)
+        pinMode(_pin_int, INPUT);
+
+    SPI.setBitOrder(MSBFIRST);
+    SPI.setDataMode(SPI_MODE0);
+    SPI.begin();
+
+    delay(2); // Wait for MRF24J to reset and stabilize (power-on reset)
+    reset();
+
     write_short(MRF_PACON2, 0x98); // – Initialize FIFOEN = 1 and TXONTS = 0x6.
     write_short(MRF_TXSTBL, 0x95); // – Initialize RFSTBL = 0x9.
 
