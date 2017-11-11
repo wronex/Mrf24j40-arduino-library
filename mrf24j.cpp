@@ -148,7 +148,7 @@ void Mrf24j::set_channel(byte channel) {
 }
 
 word Mrf24j::get_channel(void) {
-    return read_long(MRF_RFCON0) >> 4;
+    return (read_long(MRF_RFCON0) >> 4) + 11;
 }
 
 void Mrf24j::init(void) {
