@@ -193,27 +193,28 @@ void Mrf24j::interrupt_handler(void) {
     uint8_t last_interrupt = read_short(MRF_INTSTAT);
     if (last_interrupt & MRF_I_RXIF) {
         _flag_got_rx++;
+
         // read out the packet data...
         noInterrupts();
         rx_disable();
+
         // read start of rxfifo for, has 2 bytes more added by FCS. frame_length = m + n + 2
         uint8_t frame_length = read_long(0x300);
+        _rx_info.frame_length = frame_length;
 
-        // buffer data bytes
-        int rd_ptr = 0;
-        // from (0x301 + bytes_MHR) to (0x301 + frame_length - bytes_nodata - 1)
-        for (int i = 0; i < rx_datalength(); i++) {
-            _rx_info.rx_data[rd_ptr++] = read_long(0x301 + bytes_MHR + i);
-        }
-
-        byte src_l         =  read_long(0x301 + bytes_MHR - 2); // low
+        byte src_l = read_long(0x301 + bytes_MHR - 2); // low
         _rx_info.src_addr16 = (read_long(0x301 + bytes_MHR - 1) << 8) | src_l; // hi
 
-        _rx_info.frame_length = frame_length;
         // same as datasheet 0x301 + (m + n + 2) <-- frame_length
         _rx_info.lqi = read_long(0x301 + frame_length);
+
         // same as datasheet 0x301 + (m + n + 3) <-- frame_length + 1
         _rx_info.rssi = read_long(0x301 + frame_length + 1);
+
+        // from (0x301 + bytes_MHR) to (0x301 + frame_length - bytes_nodata - 1)
+        for (int i = 0; i < frame_length - bytes_nodata; i++) {
+            _rx_info.rx_data[i] = read_long(0x301 + bytes_MHR + i);
+        }
 
         rx_enable();
         interrupts();
