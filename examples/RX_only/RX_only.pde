@@ -18,7 +18,6 @@ Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 void setup() {
   Serial.begin(9600);
 
-  mrf.reset();
   mrf.init();
 
   mrf.set_pan(0xCAFE);

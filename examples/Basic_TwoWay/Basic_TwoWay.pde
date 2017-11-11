@@ -21,7 +21,6 @@ long tx_interval = 1000;
 void setup() {
   Serial.begin(9600);
 
-  mrf.reset();
   mrf.init();
 
   mrf.set_pan(0xcafe);

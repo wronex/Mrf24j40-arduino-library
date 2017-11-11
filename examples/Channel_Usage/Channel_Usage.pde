@@ -32,7 +32,7 @@ void setup() {
 
     Serial.begin(9600);
     Serial.println("Unit 'B' ");
-    mrf.reset();
+
     mrf.init();
 
     mrf.set_pan(0xcafe);
