@@ -17,22 +17,18 @@ Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 
 void setup() {
   Serial.begin(9600);
-  
+
   mrf.reset();
   mrf.init();
-  
-  mrf.set_pan(0xcafe);
-  // This is _our_ address
-  mrf.address16_write(0x6001); 
 
-  // uncomment if you want to receive any packet on this channel
-  //mrf.set_promiscuous(true);
-  
+  mrf.set_pan(0xCAFE);
+  mrf.address16_write(0x6001); // this is _our_ address
+
+  // we want to receive packets on this channel
+  mrf.set_promiscuous(true);
+
   // uncomment if you want to enable PA/LNA external control
   //mrf.set_palna(true);
-  
-  // uncomment if you want to buffer all PHY Payload
-  //mrf.set_bufferPHY(true);
 
   attachInterrupt(0, interrupt_routine, CHANGE); // interrupt 0 equivalent to pin 2(INT0) on ATmega8/168/328
   interrupts();
@@ -47,13 +43,15 @@ void loop() {
 }
 
 void handle_rx() {
-    Serial.print("received a packet ");Serial.print(mrf.get_rxinfo()->frame_length, DEC);Serial.println(" bytes long");
-    
+    Serial.print("received a packet ");
+    Serial.print(mrf.get_rxinfo()->frame_length, DEC);
+    Serial.println(" bytes long");
+
     Serial.println("\r\nASCII data (relevant data):");
     for (int i = 0; i < mrf.rx_datalength(); i++) {
         Serial.write(mrf.get_rxinfo()->rx_data[i]);
     }
-    
+
     Serial.print("\r\nLQI/RSSI=");
     Serial.print(mrf.get_rxinfo()->lqi, DEC);
     Serial.print("/");

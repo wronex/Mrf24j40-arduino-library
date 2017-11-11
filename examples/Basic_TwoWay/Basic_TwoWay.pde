@@ -15,30 +15,25 @@ const int pin_interrupt = 2; // default interrupt pin on ATmega8/168/328
 
 Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 
-long last_time;
+long last_time = 0;
 long tx_interval = 1000;
 
 void setup() {
   Serial.begin(9600);
-  
+
   mrf.reset();
   mrf.init();
-  
+
   mrf.set_pan(0xcafe);
-  // This is _our_ address
-  mrf.address16_write(0x6001); 
+  mrf.address16_write(0x6003); // this is _our_ address
 
   // uncomment if you want to receive any packet on this channel
   //mrf.set_promiscuous(true);
-  
+
   // uncomment if you want to enable PA/LNA external control
   //mrf.set_palna(true);
-  
-  // uncomment if you want to buffer all PHY Payload
-  //mrf.set_bufferPHY(true);
 
   attachInterrupt(0, interrupt_routine, CHANGE); // interrupt 0 equivalent to pin 2(INT0) on ATmega8/168/328
-  last_time = millis();
   interrupts();
 }
 
@@ -51,20 +46,25 @@ void loop() {
     unsigned long current_time = millis();
     if (current_time - last_time > tx_interval) {
         last_time = current_time;
-        Serial.println("txxxing...");
+
+        Serial.println("Transmitting data...");
+
         char str_to_send[] = "abcd";
-        mrf.send16(0x4202, str_to_send, strlen(str_to_send));
+        word receiver_address = 0x6001;
+        mrf.send16(receiver_address, str_to_send, strlen(str_to_send));
     }
 }
 
 void handle_rx() {
-    Serial.print("received a packet ");Serial.print(mrf.get_rxinfo()->frame_length, DEC);Serial.println(" bytes long");
-    
+    Serial.print("received a packet ");
+    Serial.print(mrf.get_rxinfo()->frame_length, DEC);
+    Serial.println(" bytes long");
+
     Serial.println("\r\nASCII data (relevant data):");
     for (int i = 0; i < mrf.rx_datalength(); i++) {
         Serial.write(mrf.get_rxinfo()->rx_data[i]);
     }
-    
+
     Serial.print("\r\nLQI/RSSI=");
     Serial.print(mrf.get_rxinfo()->lqi, DEC);
     Serial.print("/");
@@ -75,6 +75,8 @@ void handle_tx() {
     if (mrf.get_txinfo()->tx_ok) {
         Serial.println("TX went ok, got ack");
     } else {
-        Serial.print("TX failed after ");Serial.print(mrf.get_txinfo()->retries);Serial.println(" retries\n");
+        Serial.print("TX failed after ");
+        Serial.print(mrf.get_txinfo()->retries);
+        Serial.println(" retries\n");
     }
 }
