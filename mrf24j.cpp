@@ -8,9 +8,9 @@
 
 // essential for obtaining the data frame only
 // bytes_MHR = 2 Frame control + 1 sequence number + 2 panid + 2 shortAddr Destination + 2 shortAddr Source
-static int bytes_MHR = 9;
-static int bytes_FCS = 2; // FCS length = 2
-static int bytes_nodata = bytes_MHR + bytes_FCS; // no_data bytes in PHY payload,  header length + FCS
+static const int bytes_MHR = 9;
+static const int bytes_FCS = 2; // FCS length = 2
+static const int bytes_nodata = bytes_MHR + bytes_FCS; // no_data bytes in PHY payload,  header length + FCS
 
 static int ignoreBytes = 0; // bytes to ignore, some modules behaviour.
 
