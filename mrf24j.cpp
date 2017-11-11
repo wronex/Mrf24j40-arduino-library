@@ -144,7 +144,7 @@ void Mrf24j::set_channel(byte channel) {
     write_long(MRF_RFCON0, (((channel - 11) << 4) | 0x03));
     write_short(MRF_RFCTL, 0x04); // Reset RF state machine after channel change - part 1
     write_short(MRF_RFCTL, 0x00); // Reset RF state machine after channel change - part 2
-    delay(1);
+    delayMicroseconds(200); // From manual
 }
 
 word Mrf24j::get_channel(void) {
@@ -185,8 +185,6 @@ void Mrf24j::init(void) {
     set_channel(12);
     // max power is by default.. just leave it...
     // Set transmitter power - See “REGISTER 2-62: RF CONTROL 3 REGISTER (ADDRESS: 0x203)”.
-    // Reset RF state machine reset now in the "set_channel" routine
-    //delay(1); // delay at least 192usec
 }
 
 /**
