@@ -12,15 +12,6 @@ static const int bytes_MHR = 9;
 static const int bytes_FCS = 2; // FCS length = 2
 static const int bytes_nodata = bytes_MHR + bytes_FCS; // no_data bytes in PHY payload,  header length + FCS
 
-static int ignoreBytes = 0; // bytes to ignore, some modules behaviour.
-
-volatile uint8_t flag_got_rx;
-volatile uint8_t flag_got_tx;
-
-static rx_info_t rx_info;
-static tx_info_t tx_info;
-
-
 /**
  * Constructor MRF24J Object.
  * @param pin_reset, @param pin_chip_select, @param pin_interrupt
@@ -111,9 +102,9 @@ word Mrf24j::address16_read(void) {
 void Mrf24j::send16(word dest16, char const * data, byte const len) {
     int i = 0;
     write_long(i++, bytes_MHR); // header length
-    // +ignoreBytes is because some module seems to ignore 2 bytes after the header?!.
-    // default: ignoreBytes = 0;
-    write_long(i++, bytes_MHR+ignoreBytes+len);
+    // +_ignoreBytes is because some module seems to ignore 2 bytes after the header?!.
+    // default: _ignoreBytes = 0;
+    write_long(i++, bytes_MHR + _ignoreBytes + len);
 
     // 0 | pan compression | ack | no security | no data pending | data frame[3 bits]
     write_long(i++, 0b01100001); // first byte of Frame Control
@@ -134,7 +125,7 @@ void Mrf24j::send16(word dest16, char const * data, byte const len) {
 
     // All testing seems to indicate that the next two bytes are ignored.
     //2 bytes on FCS appended by TXMAC
-    i+=ignoreBytes;
+    i += _ignoreBytes;
     for (int q = 0; q < len; q++) {
         write_long(i++, data[q]);
     }
@@ -201,7 +192,7 @@ void Mrf24j::init(void) {
 void Mrf24j::interrupt_handler(void) {
     uint8_t last_interrupt = read_short(MRF_INTSTAT);
     if (last_interrupt & MRF_I_RXIF) {
-        flag_got_rx++;
+        _flag_got_rx++;
         // read out the packet data...
         noInterrupts();
         rx_disable();
@@ -212,28 +203,28 @@ void Mrf24j::interrupt_handler(void) {
         int rd_ptr = 0;
         // from (0x301 + bytes_MHR) to (0x301 + frame_length - bytes_nodata - 1)
         for (int i = 0; i < rx_datalength(); i++) {
-            rx_info.rx_data[rd_ptr++] = read_long(0x301 + bytes_MHR + i);
+            _rx_info.rx_data[rd_ptr++] = read_long(0x301 + bytes_MHR + i);
         }
 
         byte src_l         =  read_long(0x301 + bytes_MHR - 2); // low
-        rx_info.src_addr16 = (read_long(0x301 + bytes_MHR - 1) << 8) | src_l; // hi
+        _rx_info.src_addr16 = (read_long(0x301 + bytes_MHR - 1) << 8) | src_l; // hi
 
-        rx_info.frame_length = frame_length;
+        _rx_info.frame_length = frame_length;
         // same as datasheet 0x301 + (m + n + 2) <-- frame_length
-        rx_info.lqi = read_long(0x301 + frame_length);
+        _rx_info.lqi = read_long(0x301 + frame_length);
         // same as datasheet 0x301 + (m + n + 3) <-- frame_length + 1
-        rx_info.rssi = read_long(0x301 + frame_length + 1);
+        _rx_info.rssi = read_long(0x301 + frame_length + 1);
 
         rx_enable();
         interrupts();
     }
     if (last_interrupt & MRF_I_TXNIF) {
-        flag_got_tx++;
+        _flag_got_tx++;
         uint8_t tmp = read_short(MRF_TXSTAT);
         // 1 means it failed, we want 1 to mean it worked.
-        tx_info.tx_ok = !(tmp & ~(1 << TXNSTAT));
-        tx_info.retries = tmp >> 6;
-        tx_info.channel_busy = (tmp & (1 << CCAFAIL));
+        _tx_info.tx_ok = !(tmp & ~(1 << TXNSTAT));
+        _tx_info.retries = tmp >> 6;
+        _tx_info.channel_busy = (tmp & (1 << CCAFAIL));
     }
 }
 
@@ -243,12 +234,12 @@ void Mrf24j::interrupt_handler(void) {
  */
 void Mrf24j::check_flags(void (*rx_handler)(void), void (*tx_handler)(void)){
     // TODO - we could check whether the flags are > 1 here, indicating data was lost?
-    if (flag_got_rx) {
-        flag_got_rx = 0;
+    if (_flag_got_rx) {
+        _flag_got_rx = 0;
         rx_handler();
     }
-    if (flag_got_tx) {
-        flag_got_tx = 0;
+    if (_flag_got_tx) {
+        _flag_got_tx = 0;
         tx_handler();
     }
 }
@@ -265,22 +256,21 @@ void Mrf24j::set_promiscuous(boolean enabled) {
 }
 
 rx_info_t * Mrf24j::get_rxinfo(void) {
-    return &rx_info;
+    return &_rx_info;
 }
 
 tx_info_t * Mrf24j::get_txinfo(void) {
-    return &tx_info;
+    return &_tx_info;
 }
 
 int Mrf24j::rx_datalength(void) {
-    return rx_info.frame_length - bytes_nodata;
+    return _rx_info.frame_length - bytes_nodata;
 }
 
 void Mrf24j::set_ignoreBytes(int ib) {
     // some modules behaviour
-    ignoreBytes = ib;
+    _ignoreBytes = ib;
 }
-
 
 /**
  * Set PA/LNA external control

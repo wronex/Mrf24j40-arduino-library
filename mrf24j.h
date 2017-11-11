@@ -229,6 +229,14 @@ class Mrf24j
         int _pin_reset;
         int _pin_cs;
         int _pin_int;
+
+        volatile uint8_t _flag_got_rx;
+        volatile uint8_t _flag_got_tx;
+
+        rx_info_t _rx_info;
+        tx_info_t _tx_info;
+
+        int _ignoreBytes = 0; // bytes to ignore, some modules behaviour.
 };
 
 #endif  /* LIB_MRF24J_H */
