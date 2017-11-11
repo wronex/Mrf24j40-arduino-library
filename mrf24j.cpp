@@ -148,8 +148,7 @@ void Mrf24j::set_channel(byte channel) {
 }
 
 word Mrf24j::get_channel(void) {
-    byte panh = read_long(MRF_RFCON0);
-    return panh;
+    return read_long(MRF_RFCON0) >> 4;
 }
 
 void Mrf24j::init(void) {
