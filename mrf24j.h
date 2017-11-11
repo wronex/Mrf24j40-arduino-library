@@ -209,13 +209,6 @@ class Mrf24j
         void set_ignoreBytes(int ib);
 
         /**
-         * Set bufPHY flag to buffer all bytes in PHY Payload, or not
-         */
-        void set_bufferPHY(boolean bp);
-
-        boolean get_bufferPHY(void);
-
-        /**
          * Set PA/LNA external control
          */
         void set_palna(boolean enabled);
